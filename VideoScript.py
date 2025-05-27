@@ -67,7 +67,7 @@ def ValidateFiles(audio, images, long, music):
         print("ABORT: Long video duration is shorter than the audio duration")
         quit()
 
-    user_input = 'y' #input("$$$$$ Video duration expected to be [" + GetVerboseDuration(cumulative_audio_duration) + "] while long video duration is [" + GetVerboseDuration(long.duration) + "]\n$$$$$ Enter 'y' to proceed: ")
+    user_input = input("$$$$$ Video duration expected to be [" + GetVerboseDuration(cumulative_audio_duration) + "] while long video duration is [" + GetVerboseDuration(long.duration) + "]\n$$$$$ Enter 'y' to proceed: ")
     if user_input != 'y':
         print("ABORT: User did not select 'y'.")
         quit()
