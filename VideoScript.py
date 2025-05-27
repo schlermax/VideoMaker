@@ -149,7 +149,7 @@ def CombineTopBottom(top_video, bottom_video):
     bottom_width = bottom_video.w
     bottom_height = bottom_video.h
     side_crop_margin = int(bottom_width * 0.3)
-    bottom_crop_margin = int(bottom_height * 0.259)
+    bottom_crop_margin = int(bottom_height * 0.265)
     bottom_video = bottom_video.crop(x1=side_crop_margin, x2=bottom_width - side_crop_margin)
     bottom_video = bottom_video.crop(y1=0, y2=bottom_height - bottom_crop_margin)
 
