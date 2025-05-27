@@ -22,8 +22,8 @@ def GetFiles(path):
         print("ABORT:",error,"\nAdd the folder to the local directory of VideoScript.py")
         quit()
 
-# Verify Input
-def VerifyFiles(audio, images, long, music):
+# Validate Input
+def ValidateFiles(audio, images, long, music):
     """Verifies if the input files will be sufficient for a video.
     Must pass the following Contraints:
         - None of the folders are empty
@@ -38,7 +38,7 @@ def VerifyFiles(audio, images, long, music):
         music (List): ... music
         long (List): the long video
     """
-    print("Verifying inputs...")
+    print("Validating inputs...")
     
     folders = {"Audio":audio, "Images":images, "LongVideo":long, "Music":music}
     for folder in folders:
@@ -66,12 +66,12 @@ def VerifyFiles(audio, images, long, music):
         print("ABORT: Long video duration is shorter than the audio duration")
         quit()
 
-    user_input = input("$$$$$ Video duration expected to be [" + GetVerboseDuration(cumulative_audio_duration) + "] while long video duration is [" + GetVerboseDuration(long.duration) + "]\n$$$$$ Enter 'y' to proceed: ")
+    user_input = 'y' #input("$$$$$ Video duration expected to be [" + GetVerboseDuration(cumulative_audio_duration) + "] while long video duration is [" + GetVerboseDuration(long.duration) + "]\n$$$$$ Enter 'y' to proceed: ")
     if user_input != 'y':
         print("ABORT: User did not select 'y'.")
         quit()
     
-    print("Input Verified.")
+    print("Input Validated.")
 def GetVerboseDuration(duration):
     """Takes in a float duration of some amount of seconds 
     and returns the minutes and seconds verbosely
@@ -80,11 +80,11 @@ def GetVerboseDuration(duration):
         duration (float): seconds of the input
 
     Returns:
-        String
+        String: Verbose time
     """
     minutes = int(duration/60.0)
     seconds = duration - (minutes*60)
-    verbose_time = str(minutes)+" minutes "+str(seconds)+" seconds"
+    verbose_time = f"{minutes} minutes {seconds:.2f} seconds"
     return verbose_time
 
 # Construct video
@@ -99,7 +99,7 @@ def CombineAudioImage(audio, images):
     Returns:
         VideoFileClip; the top half of the video
     """
-    print("Creating top half video...")
+    print("Creating top half video... ", end='')
     short_videos = []
 
     for audio_path, image_path in zip(audio, images):
@@ -110,33 +110,73 @@ def CombineAudioImage(audio, images):
         short_videos.append(image_clip)
 
     top_video = concatenate_videoclips(short_videos)
-    print("Top half complete.")
+    print("Complete!")
     return top_video
 
-# # Concatenate all image/audio clips for the top half
-# top_video = concatenate_videoclips(top_clips)
+def CombineTopBottom(top_video, bottom_video):
+    """Combines input videos with one on top and one on bottom.
 
-# # Resize both videos to stack vertically
-# height = min(top_video.h, long_video.h)
-# width = max(top_video.w, long_video.w)
+    Args:
+        top_video (VideoFileClip): Video on the top (image+audio video)
+        bottom_video (VideoFileClip): Video on bottom (Longplay)
 
-# top_video_resized = top_video.resize(height=height//2).resize(width=width)
-# long_video_resized = long_video.resize(height=height//2).resize(width=width)
+    Returns:
+        VideoFileClip: Combined video in a top-bottom format
+    """
+    print("Combining the top and bottom videos... ", end='')
+    # Crop 30% off each side of the bottom video (center crop)
+    w = bottom_video.w
+    crop_margin = int(w * 0.3)
+    bottom_video = bottom_video.crop(x1=crop_margin, x2=w - crop_margin)
 
-# # Stack vertically
-# final_video = clips_array([[top_video_resized], [long_video_resized]])
+    # Resize both to half the height of the smaller video
+    height = min(top_video.h, bottom_video.h)
+    width = max(top_video.w, bottom_video.w)
 
-# # Output
-# final_video.write_videofile("output_video.mp4", fps=24)
+    top_video_resized = top_video.resize(height=height // 2).resize(width=width)
+    bottom_video_resized = bottom_video.resize(height=height // 2).resize(width=width)
+
+    # Stack vertically
+    stacked_video = clips_array([[top_video_resized], [bottom_video]])
+    print("Complete!")
+    return stacked_video
+
+def AddBackground(stacked, background):
+    """Combines the stacked video with the background
+
+    Args:
+        stacked (VideoFileClip): The top-bottom video
+        background (VideoFileClip): The long video again
+
+    Returns:
+        VideoFileClip: The video with a background now
+    """
+    print("Adding Background... ", end='')
+    video_with_background = CompositeVideoClip([background, stacked.set_position(("center", 0))])
+    print("Complete!")
+    return video_with_background
 
 
 if __name__ == "__main__":
+    # Prepare for creating the video
     audio_files = GetFiles("Audio")
     image_files = GetFiles("Images")
     long_video = GetFiles("LongVideo")
     music_files = GetFiles("Music")
 
-    VerifyFiles(audio_files, image_files, long_video, music_files)
+    ValidateFiles(audio_files, image_files, long_video, music_files)
 
+    # Construct the video
+    long_video = VideoFileClip(long_video[0])
+    
     top_half = CombineAudioImage(audio_files, image_files)
+
+    long_video = long_video.subclip(0, top_half.duration)
+
+    stacked_video = CombineTopBottom(top_half, long_video)
+
+    full_video = AddBackground(stacked_video, long_video)
+
+    print("===== ===== Estimated time to process: ["+GetVerboseDuration(stacked_video.duration*30/4.0)+"] ===== =====")
+    full_video.write_videofile("output_video.mp4", fps=30, bitrate="5000k", preset="fast")
 
