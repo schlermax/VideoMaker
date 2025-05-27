@@ -219,6 +219,7 @@ def AddBackgroundMusic(video, music_paths, volume=0.15):
 
         music_clips.append(music_clip)
         total_duration += music_clip.duration
+
         index += 1
         if index >= len(music_paths):
             index = 0
