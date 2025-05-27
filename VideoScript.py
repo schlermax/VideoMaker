@@ -1,5 +1,6 @@
 from moviepy.editor import *
 import os
+import random
 
 PAUSE_BETWEEN_AUDIO = 0.5
 
@@ -190,6 +191,46 @@ def AddBackground(stacked, background):
     print("Complete!")
     return video_with_background
 
+def AddBackgroundMusic(video, music_paths, volume=0.1):
+    """
+    Adds quiet background music to a video from a list of music files.
+
+    Args:
+        video (VideoFileClip): The video to add music to.
+        music_paths (List[str]): List of paths to mp3 files.
+        volume (float): Volume of background music (0.0 to 1.0).
+
+    Returns:
+        VideoFileClip with background music added.
+    """
+    print("Adding background music... ",end='')
+    duration_needed = video.duration
+    music_clips = []
+    
+    # Start at a random point in the list
+    start_index = random.randint(0, len(music_paths) - 1)
+    index = start_index
+
+    total_duration = 0
+    while total_duration < duration_needed:
+        clip_path = music_paths[index % len(music_paths)]
+        music_clip = AudioFileClip(clip_path).volumex(volume)
+
+        music_clips.append(music_clip)
+        total_duration += music_clip.duration
+        index += 1
+
+    # Concatenate and cut to the exact video duration
+    full_music = concatenate_audioclips(music_clips).subclip(0, duration_needed)
+
+    # Mix background music with existing video audio
+    final_audio = CompositeAudioClip([video.audio, full_music])
+    video_with_music = video.set_audio(final_audio)
+
+    print("Complete!")
+    return video_with_music
+
+
 
 if __name__ == "__main__":
     # Prepare for creating the video
@@ -211,6 +252,8 @@ if __name__ == "__main__":
 
     full_video = AddBackground(stacked_video, long_video)
 
+    final_draft = AddBackgroundMusic(full_video, music_files)
+
     #print("===== ===== Estimated time to process: ["+GetVerboseDuration(stacked_video.duration*30/4.0)+"] ===== =====")
-    full_video.write_videofile("output_video.mp4", fps=30, bitrate="5000k", preset="fast")
+    final_draft.write_videofile("output_video.mp4", fps=30, bitrate="5000k", preset="fast")
 
