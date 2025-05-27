@@ -34,10 +34,10 @@ def ValidateFiles(audio, images, long, music):
         - Check with user
 
     Args:
-        audio (List): strings representing file names for each audio
-        images (List): ... image
-        music (List): ... music
-        long (List): the long video
+        audio (List[str]): strings representing file names for each audio
+        images (List[str]): ... image
+        music (List[str]): ... music
+        long (List[str]): the long video
     """
     print("Validating inputs...")
     
@@ -110,8 +110,8 @@ def CombineAudioImage(audio, images):
     and combines them into a short video. Then combines all of those short videos into one.
 
     Args:
-        audio (List): of string paths to audio
-        images (List): ... images
+        audio (List[str]): of string paths to audio
+        images (List[str]): ... images
     
     Returns:
         VideoFileClip; the top half of the video
@@ -188,17 +188,18 @@ def AddBackground(stacked, background):
     background = background.crop(width=1920, height=1080, x_center=background.w//2, y_center=background.h//2.75)
 
     video_with_background = CompositeVideoClip([background, stacked.set_position(("center", 0))])
+
     print("Complete!")
     return video_with_background
 
-def AddBackgroundMusic(video, music_paths, volume=0.1):
+def AddBackgroundMusic(video, music_paths, volume=0.15):
     """
     Adds quiet background music to a video from a list of music files.
 
     Args:
-        video (VideoFileClip): The video to add music to.
-        music_paths (List[str]): List of paths to mp3 files.
-        volume (float): Volume of background music (0.0 to 1.0).
+        video (VideoFileClip): The video to add music to
+        music_paths (List[str]): List of paths to mp3 files
+        volume (float): Volume of background music (0.0 to 1.0)
 
     Returns:
         VideoFileClip with background music added.
@@ -213,12 +214,15 @@ def AddBackgroundMusic(video, music_paths, volume=0.1):
 
     total_duration = 0
     while total_duration < duration_needed:
-        clip_path = music_paths[index % len(music_paths)]
+        clip_path = music_paths[index]
         music_clip = AudioFileClip(clip_path).volumex(volume)
 
         music_clips.append(music_clip)
         total_duration += music_clip.duration
+
         index += 1
+        if index >= len(music_paths):
+            index = 0
 
     # Concatenate and cut to the exact video duration
     full_music = concatenate_audioclips(music_clips).subclip(0, duration_needed)
@@ -254,6 +258,5 @@ if __name__ == "__main__":
 
     final_draft = AddBackgroundMusic(full_video, music_files)
 
-    #print("===== ===== Estimated time to process: ["+GetVerboseDuration(stacked_video.duration*30/4.0)+"] ===== =====")
     final_draft.write_videofile("output_video.mp4", fps=30, bitrate="5000k", preset="fast")
 
