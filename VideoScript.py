@@ -214,15 +214,13 @@ def AddBackgroundMusic(video, music_paths, volume=0.15):
 
     total_duration = 0
     while total_duration < duration_needed:
-        clip_path = music_paths[index]
+        clip_path = music_paths[index % len(music_paths)]
         music_clip = AudioFileClip(clip_path).volumex(volume)
 
         music_clips.append(music_clip)
         total_duration += music_clip.duration
 
         index += 1
-        if index >= len(music_paths):
-            index = 0
 
     # Concatenate and cut to the exact video duration
     full_music = concatenate_audioclips(music_clips).subclip(0, duration_needed)
