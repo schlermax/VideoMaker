@@ -88,6 +88,22 @@ def GetVerboseDuration(duration):
     return verbose_time
 
 # Construct video
+def ResizeInFit(clip, target_w, target_h):
+    """Resize clip to fit target size while preserving aspect ratio.
+
+    Args:
+        clip (Generic video/image clip): The clip to resize
+        target_w (int): desired pixel width
+        target_h (int): desired pixel height
+
+    Returns:
+        clip: The same data type as the input clip except now scaled to fit within the width and height parameters.
+    """
+    img_w, img_h = clip.w, clip.h
+    scale_w = target_w / img_w
+    scale_h = target_h / img_h
+    scale = min(scale_w, scale_h)  # Fit inside box
+    return clip.resize(scale)
 def CombineAudioImage(audio, images):
     """Takes each pair of audio and their respective image (Alphabetical order)
     and combines them into a short video. Then combines all of those short videos into one.
@@ -106,10 +122,15 @@ def CombineAudioImage(audio, images):
         audio_clip = AudioFileClip(audio_path)
         duration = audio_clip.duration + PAUSE_BETWEEN_AUDIO
 
-        image_clip = ImageClip(image_path).set_duration(duration).set_audio(audio_clip)
+        image_clip = ImageClip(image_path).set_duration(duration)#.set_audio(audio_clip)
+
+        # Resize image to fit target size
+        image_clip = ResizeInFit(image_clip, 581, 412)
+        image_clip = image_clip.set_audio(audio_clip)
+
         short_videos.append(image_clip)
 
-    top_video = concatenate_videoclips(short_videos)
+    top_video = concatenate_videoclips(short_videos, method="compose")
     print("Complete!")
     return top_video
 
@@ -123,23 +144,31 @@ def CombineTopBottom(top_video, bottom_video):
     Returns:
         VideoFileClip: Combined video in a top-bottom format
     """
-    print("Combining the top and bottom videos... ", end='')
-    # Crop 30% off each side of the bottom video (center crop)
-    w = bottom_video.w
-    crop_margin = int(w * 0.3)
-    bottom_video = bottom_video.crop(x1=crop_margin, x2=w - crop_margin)
+    print("Combining the top and bottom videos and framing... ", end='')
+    # Crop 30% off each side and the bottom of the bottom video (center crop)
+    bottom_width = bottom_video.w
+    bottom_height = bottom_video.h
+    side_crop_margin = int(bottom_width * 0.3)
+    bottom_crop_margin = int(bottom_height * 0.259)
+    bottom_video = bottom_video.crop(x1=side_crop_margin, x2=bottom_width - side_crop_margin)
+    bottom_video = bottom_video.crop(y1=0, y2=bottom_height - bottom_crop_margin)
 
-    # Resize both to half the height of the smaller video
-    height = min(top_video.h, bottom_video.h)
-    width = max(top_video.w, bottom_video.w)
-
-    top_video_resized = top_video.resize(height=height // 2).resize(width=width)
-    bottom_video_resized = bottom_video.resize(height=height // 2).resize(width=width)
+    # Resize the bottom video
+    bottom_video = ResizeInFit(bottom_video, 581, 630)
 
     # Stack vertically
-    stacked_video = clips_array([[top_video_resized], [bottom_video]])
+    stacked_video = clips_array([[top_video], [bottom_video]])
+
+    # Frame it
+    frame = ImageClip("FRAME.png").set_duration(stacked_video.duration)
+    frame = frame.crop(x1=side_crop_margin, x2=bottom_width - side_crop_margin)
+    frame = frame.resize(newsize=(591,1080))
+    
+    stacked_centered = stacked_video.set_position(("center", "center"))
+    final = CompositeVideoClip([frame, stacked_centered])
+
     print("Complete!")
-    return stacked_video
+    return final
 
 def AddBackground(stacked, background):
     """Combines the stacked video with the background
@@ -152,6 +181,11 @@ def AddBackground(stacked, background):
         VideoFileClip: The video with a background now
     """
     print("Adding Background... ", end='')
+    
+    background = background.resize(3)
+
+    background = background.crop(width=1920, height=1080, x_center=background.w//2, y_center=background.h//2.75)
+
     video_with_background = CompositeVideoClip([background, stacked.set_position(("center", 0))])
     print("Complete!")
     return video_with_background
@@ -177,6 +211,6 @@ if __name__ == "__main__":
 
     full_video = AddBackground(stacked_video, long_video)
 
-    print("===== ===== Estimated time to process: ["+GetVerboseDuration(stacked_video.duration*30/4.0)+"] ===== =====")
+    #print("===== ===== Estimated time to process: ["+GetVerboseDuration(stacked_video.duration*30/4.0)+"] ===== =====")
     full_video.write_videofile("output_video.mp4", fps=30, bitrate="5000k", preset="fast")
 
