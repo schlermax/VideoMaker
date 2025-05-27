@@ -188,7 +188,7 @@ def AddBackground(stacked, background):
     background = background.crop(width=1920, height=1080, x_center=background.w//2, y_center=background.h//2.75)
 
     video_with_background = CompositeVideoClip([background, stacked.set_position(("center", 0))])
-
+    
     print("Complete!")
     return video_with_background
 
@@ -219,7 +219,6 @@ def AddBackgroundMusic(video, music_paths, volume=0.15):
 
         music_clips.append(music_clip)
         total_duration += music_clip.duration
-
         index += 1
         if index >= len(music_paths):
             index = 0
