@@ -60,11 +60,11 @@ def ValidateFiles(audio, images, long, music):
 
     cumulative_audio_duration = 0.0
     long = VideoFileClip(long[0])
-    prefix = audio[0][7]
+    prefix = audio[0][6]
     for audio_clip in audio:
-        if audio_clip[7] != prefix:
-            prefix = audio_clip[7]
-            cumulative_audio_duration + PAUSE_BETWEEN_AUDIO
+        if audio_clip[6] != prefix:
+            prefix = audio_clip[6]
+            cumulative_audio_duration += PAUSE_BETWEEN_AUDIO
         audio_clip = AudioFileClip(audio_clip)
         cumulative_audio_duration += audio_clip.duration + PAUSE_BETWEEN_AUDIO
     if long.duration < cumulative_audio_duration:
@@ -122,12 +122,12 @@ def CombineAudioImage(audio, images):
     """
     print("Creating top half video... ", end='')
     short_videos = []
-    prefix = audio[0][7]
+    prefix = audio[0][6]
 
     for audio_path, image_path in zip(audio, images):
         # Longer delay between distinct sections; denoted by beginning letter of the clip
-        if audio_path[7] != prefix:
-            prefix = audio_path[7]
+        if audio_path[6] != prefix:
+            prefix = audio_path[6]
             short_videos[-1].set_duration(duration + (2*PAUSE_BETWEEN_AUDIO))
             
         audio_clip = AudioFileClip(audio_path)
