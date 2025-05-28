@@ -60,7 +60,11 @@ def ValidateFiles(audio, images, long, music):
 
     cumulative_audio_duration = 0.0
     long = VideoFileClip(long[0])
+    prefix = audio[0][7]
     for audio_clip in audio:
+        if audio_clip[7] != prefix:
+            prefix = audio_clip[7]
+            cumulative_audio_duration + PAUSE_BETWEEN_AUDIO
         audio_clip = AudioFileClip(audio_clip)
         cumulative_audio_duration += audio_clip.duration + PAUSE_BETWEEN_AUDIO
     if long.duration < cumulative_audio_duration:
