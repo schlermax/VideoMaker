@@ -2,7 +2,7 @@ from moviepy.editor import *
 import os
 import random
 
-PAUSE_BETWEEN_AUDIO = 0.5
+PAUSE_BETWEEN_AUDIO = 0.3
 
 # Gather input
 def GetFiles(path):
@@ -118,7 +118,7 @@ def CombineAudioImage(audio, images):
     """
     print("Creating top half video... ", end='')
     short_videos = []
-    prefix = 'A'
+    prefix = audio[0][7]
 
     for audio_path, image_path in zip(audio, images):
         # Longer delay between distinct sections; denoted by beginning letter of the clip
@@ -198,7 +198,7 @@ def AddBackground(stacked, background):
     print("Complete!")
     return video_with_background
 
-def AddBackgroundMusic(video, music_paths, volume=0.15):
+def AddBackgroundMusic(video, music_paths, volume=0.11):
     """
     Adds quiet background music to a video from a list of music files.
 
