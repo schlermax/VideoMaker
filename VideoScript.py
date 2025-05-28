@@ -2,7 +2,7 @@ from moviepy.editor import *
 import os
 import random
 
-PAUSE_BETWEEN_AUDIO = 0.3
+PAUSE_BETWEEN_AUDIO = 0.15
 
 # Gather input
 def GetFiles(path):
