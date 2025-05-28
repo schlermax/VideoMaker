@@ -118,8 +118,14 @@ def CombineAudioImage(audio, images):
     """
     print("Creating top half video... ", end='')
     short_videos = []
+    prefix = 'A'
 
     for audio_path, image_path in zip(audio, images):
+        # Longer delay between distinct sections; denoted by beginning letter of the clip
+        if audio_path[7] != prefix:
+            prefix = audio_path[7]
+            short_videos[-1].set_duration(duration + (2*PAUSE_BETWEEN_AUDIO))
+            
         audio_clip = AudioFileClip(audio_path)
         duration = audio_clip.duration + PAUSE_BETWEEN_AUDIO
 
